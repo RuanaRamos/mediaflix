@@ -1,13 +1,11 @@
 package br.com.ruana.mediaflix.principal;
 
-
 import br.com.ruana.mediaflix.model.DadosSerie;
 import br.com.ruana.mediaflix.model.DadosTemporada;
 import br.com.ruana.mediaflix.model.Serie;
 import br.com.ruana.mediaflix.repository.SerieRepository;
 import br.com.ruana.mediaflix.service.ConsumoAPI;
 import br.com.ruana.mediaflix.service.ConverteDados;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,9 +21,6 @@ public class Principal {
 
     private final List<DadosSerie> dadosSeries = new ArrayList<>();
 
-
-
-
     private SerieRepository repositorio;
 
     public Principal(SerieRepository repositorio) {
@@ -33,35 +28,35 @@ public class Principal {
     }
 
     public void menu() {
-       var opcao = -1;
-        while (opcao !=0) {
+        var opcao = -1;
+        while (opcao != 0) {
 
             var menu = """
-                    1 - Buscar series
-                    2 - Buscar episodios
-                    3 - Buscar Lista
-                    0 - Sair
+                    1 - Serien suchen
+                    2 - Episoden suchen
+                    3 - Serienliste anzeigen
+                    0 - Beenden
                     """;
 
             System.out.println(menu);
             opcao = leitura.nextInt();
             leitura.nextLine();
-        switch (opcao){
-            case 1:
-                buscarSerieWeb();
-                break;
-            case  2:
-                buscarEpisodioPorSerie();
-                break;
-            case 3:
-                listarSeriesBuscadas();
-                break;
-                case 0:
-                    System.out.println("Saindo...");
+            switch (opcao) {
+                case 1:
+                    buscarSerieWeb();
                     break;
-            default:
-                System.out.println("Opcao Invalida");
-        }
+                case 2:
+                    buscarEpisodioPorSerie();
+                    break;
+                case 3:
+                    listarSeriesBuscadas();
+                    break;
+                case 0:
+                    System.out.println("Beenden...");
+                    break;
+                default:
+                    System.out.println("Ungültige Option");
+            }
         }
     }
 
@@ -73,36 +68,32 @@ public class Principal {
         System.out.println(serie);
     }
 
-
     @org.jetbrains.annotations.Nullable
     private DadosSerie getDadosSerie() {
-        System.out.print("Digite o nome da série para busca: ");
+        System.out.print("Geben Sie den Seriennamen für die Suche ein: ");
         var nomeSerie = leitura.nextLine();
         var json = consumo.obterDados(ENDERECO + nomeSerie.replace(" ", "+") + API_KEY);
         if (json == null || json.isBlank()) return null;
         return conversor.obterDados(json, DadosSerie.class);
     }
-        private void buscarEpisodioPorSerie(){
-            DadosSerie dadosSerie = getDadosSerie();
-            List<DadosTemporada> temporadas = new ArrayList<>();
 
-            for (int i = 1; i <= dadosSerie.totalTemporadas(); i++) {
-                var json = consumo.obterDados(ENDERECO + dadosSerie.titulo().replace(" ", "+") + "&season=" + i + API_KEY);
-                DadosTemporada dadosTemporada = conversor.obterDados(json, DadosTemporada.class);
-                temporadas.add(dadosTemporada);
-            }
-            temporadas.forEach(System.out::println);
+    private void buscarEpisodioPorSerie() {
+        DadosSerie dadosSerie = getDadosSerie();
+        if (dadosSerie == null) return;
+        List<DadosTemporada> temporadas = new ArrayList<>();
 
+        for (int i = 1; i <= dadosSerie.totalTemporadas(); i++) {
+            var json = consumo.obterDados(ENDERECO + dadosSerie.titulo().replace(" ", "+") + "&season=" + i + API_KEY);
+            DadosTemporada dadosTemporada = conversor.obterDados(json, DadosTemporada.class);
+            temporadas.add(dadosTemporada);
         }
-    private void listarSeriesBuscadas() {
-        List<Serie> series = new ArrayList<>();
-        series = dadosSeries.stream()
-                .map(d -> new Serie(d))
-                        .collect(Collectors.toList());
-        series.stream()
-                        .sorted(Comparator.comparing(Serie::getGenero))
-                                .forEach(System.out::println);
-
+        temporadas.forEach(System.out::println);
     }
 
+    private void listarSeriesBuscadas() {
+        List<Serie> series = repositorio.findAll();
+        series.stream()
+                .sorted(Comparator.comparing(Serie::getGenero))
+                .forEach(System.out::println);
+    }
 }

@@ -29,6 +29,8 @@ public class Serie {
     @Transient
     private List<DadosSerie> dadosSeries = new ArrayList<>();
 
+    public Serie(){}
+
     public Serie(DadosSerie dadosSerie){
         this.titulo = dadosSerie.titulo();
         this.totalTemporadas = dadosSerie.totalTemporadas();
