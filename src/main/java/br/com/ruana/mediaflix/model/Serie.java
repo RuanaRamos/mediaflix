@@ -1,6 +1,6 @@
+// src/main/java/br/com/ruana/mediaflix/model/Serie.java
 package br.com.ruana.mediaflix.model;
 
-import br.com.ruana.mediaflix.service.ConsultaChatGPT;
 import br.com.ruana.mediaflix.service.ConsultaChatGPT;
 import jakarta.persistence.*;
 
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.OptionalDouble;
 
 @Entity
-@Table(name = "Series")
+@Table(name = "series")
 public class Serie {
 
     @Id
@@ -20,16 +20,18 @@ public class Serie {
     private String titulo;
     private Integer totalTemporadas;
     private Double avaliacao;
+
     @Enumerated(EnumType.STRING)
     private Categoria genero;
+
     private String atores;
     private String poster;
     private String sinopse;
 
-    @Transient
-    private List<DadosSerie> dadosSeries = new ArrayList<>();
+    @OneToMany(mappedBy = "serie", cascade = CascadeType.ALL, fetch = FetchType.EAGER )
+    private List<Episodio> episodios = new ArrayList<>();
 
-    public Serie(){}
+    public Serie() {}
 
     public Serie(DadosSerie dadosSerie){
         this.titulo = dadosSerie.titulo();
@@ -41,80 +43,42 @@ public class Serie {
         this.sinopse = ConsultaChatGPT.obterTraducao(dadosSerie.sinopse()).trim();
     }
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
 
-    public String getTitulo() {
-        return titulo;
-    }
+    public Integer getTotalTemporadas() { return totalTemporadas; }
+    public void setTotalTemporadas(Integer totalTemporadas) { this.totalTemporadas = totalTemporadas; }
 
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
-    }
+    public Double getAvaliacao() { return avaliacao; }
+    public void setAvaliacao(Double avaliacao) { this.avaliacao = avaliacao; }
 
-    public Integer getTotalTemporadas() {
-        return totalTemporadas;
-    }
+    public Categoria getGenero() { return genero; }
+    public void setGenero(Categoria genero) { this.genero = genero; }
 
-    public void setTotalTemporadas(Integer totalTemporadas) {
-        this.totalTemporadas = totalTemporadas;
-    }
+    public String getAtores() { return atores; }
+    public void setAtores(String atores) { this.atores = atores; }
 
-    public Double getAvaliacao() {
-        return avaliacao;
-    }
+    public String getPoster() { return poster; }
+    public void setPoster(String poster) { this.poster = poster; }
 
-    public void setAvaliacao(Double avaliacao) {
-        this.avaliacao = avaliacao;
-    }
+    public String getSinopse() { return sinopse; }
+    public void setSinopse(String sinopse) { this.sinopse = sinopse; }
 
-    public Categoria getGenero() {
-        return genero;
-    }
-
-    public void setGenero(Categoria genero) {
-        this.genero = genero;
-    }
-
-    public String getAtores() {
-        return atores;
-    }
-
-    public void setAtores(String atores) {
-        this.atores = atores;
-    }
-
-    public String getPoster() {
-        return poster;
-    }
-
-    public void setPoster(String poster) {
-        this.poster = poster;
-    }
-
-    public String getSinopse() {
-        return sinopse;
-    }
-
-    public void setSinopse(String sinopse) {
-        this.sinopse = sinopse;
-    }
+    public void setEpisodios(List<Episodio> episodios) { this.episodios = episodios; }
+    public List<Episodio> getEpisodios() { return episodios; }
 
     @Override
     public String toString() {
-        return
-                "genero=" + genero +
-                        ", titulo='" + titulo + '\'' +
-                        ", totalTemporadas=" + totalTemporadas +
-                        ", avaliacao=" + avaliacao +
-
-                        ", atores='" + atores + '\'' +
-                        ", poster='" + poster + '\'' +
-                        ", sinopse='" + sinopse + '\'';
+        return "genero=" + genero +
+                ", titulo='" + titulo + '\'' +
+                ", totalTemporadas=" + totalTemporadas +
+                ", avaliacao=" + avaliacao +
+                ", atores='" + atores + '\'' +
+                ", poster='" + poster + '\'' +
+                ", sinopse='" + sinopse + '\'' +
+                ", episodios='" + episodios + '\'';
     }
 }
