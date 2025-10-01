@@ -1,6 +1,4 @@
-// src/main/java/br/com/ruana/mediaflix/model/Serie.java
 package br.com.ruana.mediaflix.model;
-
 import br.com.ruana.mediaflix.service.ConsultaChatGPT;
 import jakarta.persistence.*;
 
@@ -36,11 +34,14 @@ public class Serie {
     public Serie(DadosSerie dadosSerie){
         this.titulo = dadosSerie.titulo();
         this.totalTemporadas = dadosSerie.totalTemporadas();
-        this.avaliacao = OptionalDouble.of(Double.valueOf(dadosSerie.avaliacao())).orElse(0);
-        this.genero = Categoria.fromString(dadosSerie.genero().split(",")[0].trim());
+        this.avaliacao = (dadosSerie.avaliacao() == null || dadosSerie.avaliacao().isBlank()
+                || "N/A".equalsIgnoreCase(dadosSerie.avaliacao()))
+                ? 0.0 : Double.valueOf(dadosSerie.avaliacao());
+
+        this.genero = Categoria.fromPortugues(dadosSerie.genero().split(",")[0].trim());
         this.atores = dadosSerie.atores();
         this.poster = dadosSerie.posters();
-        this.sinopse = ConsultaChatGPT.obterTraducao(dadosSerie.sinopse()).trim();
+        this.sinopse  = ConsultaChatGPT.obterTraducao(dadosSerie.sinopse()).trim();
     }
 
     public Long getId() { return id; }

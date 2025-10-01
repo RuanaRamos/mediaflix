@@ -1,11 +1,12 @@
 package br.com.ruana.mediaflix.service;
 
+
 import com.theokanning.openai.completion.CompletionRequest;
 import com.theokanning.openai.service.OpenAiService;
 
 public class ConsultaChatGPT {
     public static String obterTraducao(String texto) {
-        String key = System.getenv("OPENAI_API_KEY");
+        String key = System.getenv("OPENAI_APIKEY");
         if (key == null || key.isBlank()) return texto;
 
         OpenAiService service = new OpenAiService(key);
