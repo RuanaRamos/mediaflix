@@ -27,17 +27,9 @@ public class Episodio {
     public Episodio(Integer numeroTemporada, DadosEpisodios de) {
         this.temporada = (numeroTemporada != null ? numeroTemporada : 1);
         this.titulo = de.titulo();
-        this.numeroEpisodio = parseIntSafe(String.valueOf(de.numero()));
+        this.numeroEpisodio = de.numeroComoInteiro();
         this.avaliacao = parseDoubleSafe(de.avaliacao());
         this.dataLancamento = parseDateSafe(de.dataLancamento());
-    }
-
-
-    private Integer parseIntSafe(String raw) {
-        if (raw == null) return null;
-        raw = raw.trim();
-        if (raw.isEmpty() || "N/A".equalsIgnoreCase(raw)) return null;
-        try { return Integer.valueOf(raw); } catch (NumberFormatException e) { return null; }
     }
 
     private Double parseDoubleSafe(String raw) {

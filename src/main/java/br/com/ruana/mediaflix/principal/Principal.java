@@ -6,7 +6,7 @@ import br.com.ruana.mediaflix.service.ConsumoApi;
 import br.com.ruana.mediaflix.service.ConverteDados;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 public class Principal {
 
@@ -117,19 +117,24 @@ public class Principal {
         if(serie.isPresent()) {
 
             var serieEncontrada = serie.get();
-            List<DadosTemporada> temporadas = new ArrayList<>();
+            List<Episodio> episodios = new ArrayList<>();
 
             for (int i = 1; i <= serieEncontrada.getTotalTemporadas(); i++) {
                 var json = consumo.obterDados(ENDERECO + serieEncontrada.getTitulo().replace(" ", "+") + "&season=" + i + API_KEY);
                 DadosTemporada dadosTemporada = conversor.obterDados(json, DadosTemporada.class);
-                temporadas.add(dadosTemporada);
-            }
-            temporadas.forEach(System.out::println);
+                Integer numeroTemporada = Optional.ofNullable(dadosTemporada.numeroComoInteiro()).orElse(i);
+                var dadosEpisodios = Optional.ofNullable(dadosTemporada.episodios()).orElse(Collections.emptyList());
 
-            List<Episodio> episodios = temporadas.stream()
-                    .flatMap(d -> d.episodios().stream()
-                            .map(e -> new Episodio(d.numero(), e)))
-                    .collect(Collectors.toList());
+                for (int j = 0; j < dadosEpisodios.size(); j++) {
+                    var dadosEp = dadosEpisodios.get(j);
+                    Episodio episodio = new Episodio(numeroTemporada, dadosEp);
+                    if (episodio.getNumeroEpisodio() == null) {
+                        episodio.setNumeroEpisodio(j + 1);
+                    }
+                    episodio.setSerie(serieEncontrada);
+                    episodios.add(episodio);
+                }
+            }
 
             serieEncontrada.setEpisodios(episodios);
             repositorio.save(serieEncontrada);
