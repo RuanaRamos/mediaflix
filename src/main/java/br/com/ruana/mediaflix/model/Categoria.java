@@ -7,7 +7,6 @@ public enum Categoria {
     DRAMA("Drama", "Drama"),
     CRIME("Crime", "Crime");
 
-
     private String categoriaOmdb;
     private String categoriaPortugues;
 
@@ -15,7 +14,8 @@ public enum Categoria {
         this.categoriaOmdb = categoriaOmdb;
         this.categoriaPortugues = categoriaPortugues;
     }
-    public static Categoria fromPortugues(String text) {
+
+    public static Categoria fromString(String text) {
         for (Categoria categoria : Categoria.values()) {
             if (categoria.categoriaOmdb.equalsIgnoreCase(text)) {
                 return categoria;
@@ -24,4 +24,12 @@ public enum Categoria {
         throw new IllegalArgumentException("Nenhuma categoria encontrada para a string fornecida: " + text);
     }
 
+    public static Categoria fromPortugues(String text) {
+        for (Categoria categoria : Categoria.values()) {
+            if (categoria.categoriaPortugues.equalsIgnoreCase(text)) {
+                return categoria;
+            }
+        }
+        throw new IllegalArgumentException("Nenhuma categoria encontrada para a string fornecida: " + text);
+    }
 }

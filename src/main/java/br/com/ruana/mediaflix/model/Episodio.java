@@ -2,8 +2,8 @@ package br.com.ruana.mediaflix.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-
 
 @Entity
 @Table(name = "episodios")
@@ -21,82 +21,71 @@ public class Episodio {
     @ManyToOne
     private Serie serie;
 
-    public Episodio(){}
+    public Episodio() {}
 
 
-    public Episodio(Integer numeroTemporada, DadosEpisodios dadosEpisodio) {
-        this.temporada = numeroTemporada;
-        this.titulo = dadosEpisodio.titulo();
-        this.numeroEpisodio = dadosEpisodio.numero();
+    public Episodio(Integer numeroTemporada, DadosEpisodios de) {
+        this.temporada = (numeroTemporada != null ? numeroTemporada : 1);
+        this.titulo = de.titulo();
+        this.numeroEpisodio = parseIntSafe(String.valueOf(de.numero()));
+        this.avaliacao = parseDoubleSafe(de.avaliacao());
+        this.dataLancamento = parseDateSafe(de.dataLancamento());
+    }
 
-        try {
-            this.avaliacao = Double.valueOf(dadosEpisodio.avaliacao());
-        } catch (NumberFormatException ex) {
-            this.avaliacao = 0.0;
+
+    private Integer parseIntSafe(String raw) {
+        if (raw == null) return null;
+        raw = raw.trim();
+        if (raw.isEmpty() || "N/A".equalsIgnoreCase(raw)) return null;
+        try { return Integer.valueOf(raw); } catch (NumberFormatException e) { return null; }
+    }
+
+    private Double parseDoubleSafe(String raw) {
+        if (raw == null) return 0.0;
+        raw = raw.trim();
+        if (raw.isEmpty() || "N/A".equalsIgnoreCase(raw)) return 0.0;
+        try { return Double.valueOf(raw); } catch (NumberFormatException e) { return 0.0; }
+    }
+
+    private LocalDate parseDateSafe(String raw) {
+        if (raw == null) return null;
+        raw = raw.trim();
+        if (raw.isEmpty() || "N/A".equalsIgnoreCase(raw)) return null;
+
+
+        try { return LocalDate.parse(raw); }
+        catch (DateTimeParseException e1) {
+            try {
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd MMM yyyy")
+                        .withLocale(java.util.Locale.ENGLISH);
+                return LocalDate.parse(raw, fmt);
+            } catch (DateTimeParseException e2) {
+                return null;
+            }
         }
-
-        try {
-            this.dataLancamento = LocalDate.parse(dadosEpisodio.dataLancamento());
-        } catch (DateTimeParseException ex) {
-            this.dataLancamento = null;
-        }
     }
 
-    public Long getId() {
-        return id;
-    }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Serie getSerie() {
-        return serie;
-    }
+    public Serie getSerie() { return serie; }
+    public void setSerie(Serie serie) { this.serie = serie; }
 
-    public void setSerie(Serie serie) {
-        this.serie = serie;
-    }
+    public Integer getTemporada() { return temporada; }
+    public void setTemporada(Integer temporada) { this.temporada = temporada; }
 
-    public Integer getTemporada() {
-        return temporada;
-    }
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
 
-    public void setTemporada(Integer temporada) {
-        this.temporada = temporada;
-    }
+    public Integer getNumeroEpisodio() { return numeroEpisodio; }
+    public void setNumeroEpisodio(Integer numeroEpisodio) { this.numeroEpisodio = numeroEpisodio; }
 
-    public String getTitulo() {
-        return titulo;
-    }
+    public Double getAvaliacao() { return avaliacao; }
+    public void setAvaliacao(Double avaliacao) { this.avaliacao = avaliacao; }
 
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
-    }
-
-    public Integer getNumeroEpisodio() {
-        return numeroEpisodio;
-    }
-
-    public void setNumeroEpisodio(Integer numeroEpisodio) {
-        this.numeroEpisodio = numeroEpisodio;
-    }
-
-    public Double getAvaliacao() {
-        return avaliacao;
-    }
-
-    public void setAvaliacao(Double avaliacao) {
-        this.avaliacao = avaliacao;
-    }
-
-    public LocalDate getDataLancamento() {
-        return dataLancamento;
-    }
-
-    public void setDataLancamento(LocalDate dataLancamento) {
-        this.dataLancamento = dataLancamento;
-    }
+    public LocalDate getDataLancamento() { return dataLancamento; }
+    public void setDataLancamento(LocalDate dataLancamento) { this.dataLancamento = dataLancamento; }
 
     @Override
     public String toString() {
@@ -104,7 +93,6 @@ public class Episodio {
                 ", titulo='" + titulo + '\'' +
                 ", numeroEpisodio=" + numeroEpisodio +
                 ", avaliacao=" + avaliacao +
-                ", dataLancamento=" + dataLancamento ;
+                ", dataLancamento=" + dataLancamento;
     }
 }
-
