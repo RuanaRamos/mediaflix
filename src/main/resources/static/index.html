@@ -3,17 +3,21 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/styles.css" />
-    <title>Ruana MediaFlix</title>
 
+    <!-- Ícones + fonte -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
+
+    <!-- CSS local -->
+    <link rel="stylesheet" href="/css/styles.css" />
+    <title>Ruana MediaFlix</title>
 </head>
 <body>
 <header class="cabecalho">
     <div class="cabecalho__logo">
-        <img src="/static/img/logo-ruana-mediaflix.svg?v=1" alt="Ruana MediaFlix" class="logo">
-        <h1>Ruana MediaFlix</h1>
+        <img src="/img/logo-ruana-mediaflix.svg?v=1" alt="Ruana MediaFlix" class="logo" />
+        <h1 class="sr-only">Ruana MediaFlix</h1>
+
         <select data-categorias>
             <option value="todos">Categorias</option>
             <option value="comédia">Comédia</option>
@@ -30,24 +34,62 @@
     </div>
 </header>
 
-<main>
-    <section data-name="lancamentos" class="section">
+<main class="container">
+    <section class="section">
         <h2>Lançamentos no Ruana MediaFlix</h2>
+        <ul id="grid-lancamentos" class="grid"></ul>
     </section>
 
-    <section data-name="top5" class="section">
+    <section class="section">
         <h2>Títulos populares no Ruana MediaFlix</h2>
+        <ul id="grid-top5" class="grid"></ul>
     </section>
 
-    <section data-name="series" class="section">
+    <section class="section">
         <h2>Títulos no Ruana MediaFlix</h2>
-    </section>
-
-    <section data-name="categoria" class="hidden pesquisa">
-        <h2>Títulos no Ruana MediaFlix</h2>
+        <ul id="grid-series" class="grid"></ul>
     </section>
 </main>
 
-<script type="module" src="/static/scripts/index.js"></script>
+<!-- JS INLINE para ELIMINAR problema de caminho. Depois, se quiser, movemos para /scripts/index.js -->
+<script type="module">
+    console.log('[MediaFlix] inline JS carregado');
+
+    function li(v){ return document.querySelector(v); }
+    async function get(endpoint){
+      const r = await fetch(endpoint, { headers:{Accept:'application/json'} });
+      if(!r.ok) throw new Error(`HTTP ${r.status} @ ${endpoint}`);
+      return r.json();
+    }
+    function card(item){
+      const titulo = item.titulo ?? item.nome ?? 'Sem título';
+      const poster = (item.poster ?? item.imagem ?? item.capa ?? '').replace(/^http:\/\//,'https://');
+      const img = poster ? `<img class="card__thumb" src="${poster}" alt="${titulo}">`
+                         : `<div class="card__thumb card__thumb--fallback"></div>`;
+      return `<li class="card">${img}<div class="card__body"><h3 class="card__title">${titulo}</h3></div></li>`;
+    }
+
+    async function render(endpoint, gridSel){
+      try{
+        const data = await get(endpoint);
+        console.info('[MediaFlix]', endpoint, '→', Array.isArray(data)? data.length : data);
+        li(gridSel).innerHTML = (data||[]).map(card).join('');
+      }catch(e){
+        console.error('Falha em', endpoint, e);
+        li(gridSel).innerHTML = `<li style="color:#b00">Erro ao carregar ${endpoint}</li>`;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', async()=>{
+      console.log('[MediaFlix] DOM pronto');
+      // use /series em todas as seções pra garantir conteúdo agora
+      await Promise.all([
+        render('/series', '#grid-lancamentos'),
+        render('/series', '#grid-top5'),
+        render('/series', '#grid-series'),
+      ]);
+    });
+</script>
+
 </body>
 </html>

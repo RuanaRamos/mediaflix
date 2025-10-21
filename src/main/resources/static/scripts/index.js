@@ -1,75 +1,108 @@
-import getDados from "/scripts/getDados.js";
+// util: mesma origem (localhost e ngrok)
+async function getJson(endpoint) {
+  const r = await fetch(endpoint, { headers: { "Accept": "application/json" } });
+  if (!r.ok) throw new Error(`HTTP ${r.status} @ ${endpoint}`);
+  return r.json();
+}
 
-const elementos = {
-  top5: document.querySelector('[data-name="top5"]'),
-  lancamentos: document.querySelector('[data-name="lancamentos"]'),
-  series: document.querySelector('[data-name="series"]'),
-  categoria: document.querySelector('[data-name="categoria"]'),
-};
+// tenta vários nomes de campo
+function pick(obj, keys, def = undefined) {
+  for (const k of keys) {
+    if (obj && obj[k] != null && obj[k] !== "") return obj[k];
+  }
+  return def;
+}
 
-const categoriaSelect = document.querySelector('[data-categorias]');
-const sections = document.querySelectorAll('.section');
+// normaliza URL do poster (força https e evita vazio)
+function normalizePoster(url, imdbId) {
+  if (typeof url !== "string") url = "";
+  url = url.trim();
 
-function criarLista(elemento, dados) {
-  const ulAntiga = elemento.querySelector('ul');
-  if (ulAntiga) ulAntiga.remove();
+  // se vier http:, troca por https:
+  if (url.startsWith("http://")) url = "https://" + url.slice(7);
 
-  const ul = document.createElement('ul');
-  ul.className = 'lista';
-  ul.innerHTML = dados.map(f => `
-    <li>
-      <a href="/detalhes.html?id=${f.id}">
-        <img src="${f.poster}" alt="${f.titulo}">
-      </a>
+  // alguns serviços usam // sem protocolo
+  if (url.startsWith("//")) url = "https:" + url;
+
+  // se ainda estiver vazio e tiver imdbId, tenta uma thumb pública do OMDb (se você usa a chave lá no backend)
+  // OBS: se não tiver chave no backend isso não vai funcionar; então só use se preciso.
+  if (!url && imdbId) {
+    // url = `https://img.omdbapi.com/?i=${imdbId}&h=600&apikey=SUACHAVE`; // descomente se tiver
+  }
+  return url || "";
+}
+
+// card HTML
+function cardHtml(item) {
+  const id = pick(item, ["id", "serieId", "codigo", "uid", "imdbId"]) ?? "";
+  const titulo = pick(item, ["titulo", "nome", "title", "name"], "Sem título");
+  const posterRaw = pick(item, ["poster", "imagem", "capa", "urlImagem", "posterUrl", "image", "thumb", "url"]);
+  const poster = normalizePoster(posterRaw, pick(item, ["imdbId"]));
+
+  const imgTag = poster
+    ? `<img class="card__thumb" src="${poster}" alt="${titulo}">`
+    : `<div class="card__thumb card__thumb--fallback" aria-label="sem imagem"></div>`;
+
+  return `
+    <li class="card" data-id="${id}">
+      ${imgTag}
+      <div class="card__body">
+        <h3 class="card__title" title="${titulo}">${titulo}</h3>
+      </div>
     </li>
-  `).join('');
-  elemento.appendChild(ul);
+  `;
 }
 
-function mostrarTodas() {
-  sections.forEach(s => s.classList.remove('hidden'));
-  elementos.categoria.classList.add('hidden');
-}
-
-function mostrarApenasCategoria() {
-  sections.forEach(s => s.classList.add('hidden'));
-  elementos.categoria.classList.remove('hidden');
-}
-
-function normalizarCategoria(valor) {
-  return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase(); // "comédia" -> "COMEDIA"
-}
-
-categoriaSelect.addEventListener('change', async () => {
-  const valor = categoriaSelect.value;
-  if (valor === 'todos') {
-    mostrarTodas();
-    await gerarSeries();
-    return;
-  }
+async function renderLista(endpoint, gridSel) {
   try {
-    mostrarApenasCategoria();
-    const enumCat = normalizarCategoria(valor);
-    const data = await getDados(`/series/categoria/${enumCat}`);
-    criarLista(elementos.categoria, data);
-  } catch (e) {
-    console.error(e);
-  }
-});
+    const data = await getJson(endpoint);
 
-async function gerarSeries() {
-  try {
-    const [top5, lanc, todas] = await Promise.all([
-      getDados('/series/top5'),
-      getDados('/series/lancamentos'),
-      getDados('/series')
-    ]);
-    criarLista(elementos.top5, top5);
-    criarLista(elementos.lancamentos, lanc);
-    criarLista(elementos.series, todas.slice(0, 5));
+    // diagnóstico rápido no console
+    console.info(`[MediaFlix] GET ${endpoint} →`, Array.isArray(data) ? `${data.length} itens` : data);
+    if (Array.isArray(data) && data[0]) console.debug(`[MediaFlix] exemplo do item[0]:`, data[0]);
+
+    const grid = document.querySelector(gridSel);
+    if (!grid) return;
+
+    const list = Array.isArray(data) ? data : [];
+    grid.innerHTML = list.map(cardHtml).join("");
   } catch (e) {
-    console.error("Erro ao carregar dados iniciais:", e);
+    console.error("Falha ao renderizar", endpoint, e);
+    const grid = document.querySelector(gridSel);
+    if (grid) grid.innerHTML = `<li style="color:#b00">Erro ao carregar ${endpoint}</li>`;
   }
 }
 
-gerarSeries();
+function wireClickCards() {
+  document.body.addEventListener("click", (e) => {
+    const li = e.target.closest(".card");
+    if (!li) return;
+    const id = li.dataset.id;
+    if (id) window.location.href = `/detalhes.html?id=${encodeURIComponent(id)}`;
+  });
+}
+
+function wireCategorias() {
+  const sel = document.querySelector("[data-categorias]");
+  if (!sel) return;
+  sel.addEventListener("change", async () => {
+    const v = sel.value;
+    const endpoint = v === "todos" ? "/series" : `/series?genero=${encodeURIComponent(v)}`;
+    await renderLista(endpoint, "#grid-categoria");
+    document.querySelector('[data-name="categoria"]').classList.remove("hidden");
+  });
+}
+
+async function init() {
+  // Para garantir cards na tela, usa /series em todas as seções neste primeiro passo.
+  await Promise.all([
+    renderLista("/series", "#grid-lancamentos"),
+    renderLista("/series", "#grid-top5"),
+    renderLista("/series", "#grid-series"),
+  ]);
+
+  wireClickCards();
+  wireCategorias();
+}
+
+window.addEventListener("DOMContentLoaded", init);

@@ -4,6 +4,7 @@ import br.com.ruana.mediaflix.model.*;
 import br.com.ruana.mediaflix.repository.SerieRepository;
 import br.com.ruana.mediaflix.service.ConsumoApi;
 import br.com.ruana.mediaflix.service.ConverteDados;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.*;
 
@@ -217,7 +218,7 @@ public class Principal {
         buscarSeriePorTitulo();
         if(serieBusca.isPresent()){
             Serie serie = serieBusca.get();
-            List<Episodio> topEpisodios = repositorio.topEpisodiosPorSerie(serie);
+            List<Episodio> topEpisodios = repositorio.topEpisodiosPorSerie(serie, PageRequest.of(0, 5));
             topEpisodios.forEach(e ->
                     System.out.printf("Série: %s Temporada %s - Episódio %s - %s Avaliação %s\n",
                             e.getSerie().getTitulo(), e.getTemporada(),

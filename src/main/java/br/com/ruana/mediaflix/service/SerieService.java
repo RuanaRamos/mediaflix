@@ -7,9 +7,11 @@ import br.com.ruana.mediaflix.model.Episodio;
 import br.com.ruana.mediaflix.model.Serie;
 import br.com.ruana.mediaflix.repository.SerieRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,7 +37,7 @@ public class SerieService {
     }
 
     public List<SerieDTO> obterLancamentos() {
-        return converteDados(repositorio.lancamentosMaisRecentes());
+        return converteDados(repositorio.lancamentosMaisRecentes(PageRequest.of(0, 5)));
     }
 
     public SerieDTO obterPorId(Long id) {
@@ -57,7 +59,7 @@ public class SerieService {
                     .map(e -> new EpisodioDTO(e.getTemporada(), e.getNumeroEpisodio(), e.getTitulo()))
                     .collect(Collectors.toList());
         }
-        return null;
+        return Collections.emptyList();
     }
 
     public List<EpisodioDTO> obterTemporadasPorNumero(Long id, Long numero) {
@@ -73,11 +75,12 @@ public class SerieService {
     }
 
     public List<EpisodioDTO> obterTopEpisodios(Long id) {
-        var serie = repositorio.findById(id).get();
-        return repositorio.topEpisodiosPorSerie(serie)
-                .stream()
-                .map(e -> new EpisodioDTO(e.getTemporada(), e.getNumeroEpisodio(), e.getTitulo()))
-                .collect(Collectors.toList());
+        return repositorio.findById(id)
+                .map(serie -> repositorio.topEpisodiosPorSerie(serie, PageRequest.of(0, 5))
+                        .stream()
+                        .map(e -> new EpisodioDTO(e.getTemporada(), e.getNumeroEpisodio(), e.getTitulo()))
+                        .collect(Collectors.toList()))
+                .orElse(Collections.emptyList());
     }
 }
 
