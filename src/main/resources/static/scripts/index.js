@@ -4,7 +4,7 @@ function https(u){ if(typeof u!=='string') return ''; u=u.trim(); if(u.startsWit
 
 function cardHtml(item){
   const id     = pick(item, ['id','serieId','codigo','uid','imdbId'], '');
-  const titulo = pick(item, ['titulo','nome','title','name'], 'Sem título');
+   const titulo = pick(item, ['titulo','nome','title','name'], 'Ohne Titel');
   const poster = https(pick(item, ['poster','posterUrl','imagem','capa','urlImagem','image','thumb','url'], ''));
   const img    = poster ? `<img class="card__thumb" src="${poster}" alt="${titulo}">`
                         : `<div class="card__thumb card__thumb--fallback"></div>`;
@@ -18,7 +18,7 @@ function cardHtml(item){
 async function render(endpoint, target){
  const container = document.querySelector(target);
   if(!container){
-    console.warn('Container não encontrado para', target);
+       console.warn('Container für', target, 'nicht gefunden');
     return;
   }
   try{
@@ -26,10 +26,10 @@ async function render(endpoint, target){
      const list = Array.isArray(data) ? data : [];
         container.innerHTML = list.length
           ? list.map(cardHtml).join('')
-          : `<li class="grid__empty">Nenhuma série encontrada.</li>`;
+           : `<li class="grid__empty">Keine Serien gefunden.</li>`;
   }catch(e){
-    console.error('Falha em', endpoint, e);
-    container.innerHTML = `<li class="grid__empty" style="color:#b00">Erro ao carregar ${endpoint}</li>`;
+   console.error('Fehler bei', endpoint, e);
+       container.innerHTML = `<li class="grid__empty" style="color:#b00">Fehler beim Laden von ${endpoint}</li>`;
   }
 }
 
