@@ -3,8 +3,13 @@ package br.com.ruana.mediaflix.service;
 import br.com.ruana.mediaflix.dto.EpisodioDTO;
 import br.com.ruana.mediaflix.dto.SerieDTO;
 import br.com.ruana.mediaflix.model.Categoria;
+import br.com.ruana.mediaflix.model.DadosEpisodios;
+import br.com.ruana.mediaflix.model.DadosTemporada;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Comparator;
-
+import java.util.Objects;
 import br.com.ruana.mediaflix.model.Episodio;
 import br.com.ruana.mediaflix.model.Serie;
 import br.com.ruana.mediaflix.repository.SerieRepository;
@@ -23,6 +28,12 @@ public class SerieService {
 
     @Autowired
     private SerieRepository repositorio;
+
+    private static final String ENDERECO = "https://www.omdbapi.com/?t=";
+    private static final String API_KEY = "&apikey=6585022c";
+
+    private final ConsumoApi consumoApi = new ConsumoApi();
+    private final ConverteDados conversor = new ConverteDados();
 
     public List<SerieDTO> obterTodasAsSeries() {
         return converteDados(repositorio.findAll());
@@ -60,7 +71,16 @@ public class SerieService {
     }
 
     public List<EpisodioDTO> obterTemporadasPorNumero(Long id, Integer numero) {
-        return converterEpisodios(repositorio.obterEpisodiosPorTemporada(id, numero));
+        List<Episodio> episodios = repositorio.obterEpisodiosPorTemporada(id, numero);
+
+        if (episodios == null || episodios.isEmpty()) {
+            episodios = repositorio.findById(id)
+                    .map(serie -> buscarEpisodiosDaApi(serie, numero))
+                    .orElse(Collections.emptyList());
+        }
+
+        return converterEpisodios(episodios);
+    }
     }
 
     public List<SerieDTO> obterSeriesPorCategoria(String nomeGenero) {
@@ -91,5 +111,51 @@ public class SerieService {
                 .map(e -> new EpisodioDTO(e.getTemporada(), e.getNumeroEpisodio(), e.getTitulo()))
                 .collect(Collectors.toList());
     }
+
+private List<Episodio> buscarEpisodiosDaApi(Serie serie, Integer numeroTemporada) {
+    if (serie == null || numeroTemporada == null || numeroTemporada <= 0) {
+        return Collections.emptyList();
+    }
+
+    String tituloCodificado = URLEncoder.encode(serie.getTitulo(), StandardCharsets.UTF_8);
+    String url = ENDERECO + tituloCodificado + "&season=" + numeroTemporada + API_KEY;
+    String json = consumoApi.obterDados(url);
+    DadosTemporada dadosTemporada = conversor.obterDados(json, DadosTemporada.class);
+    if (dadosTemporada == null) {
+        return Collections.emptyList();
+    }
+
+    Integer numeroTemporadaNormalizado = Optional.ofNullable(dadosTemporada.numeroComoInteiro())
+            .orElse(numeroTemporada);
+    List<DadosEpisodios> dadosEpisodios = Optional.ofNullable(dadosTemporada.episodios())
+            .orElse(Collections.emptyList());
+
+    List<Episodio> episodios = new ArrayList<>();
+
+    for (int i = 0; i < dadosEpisodios.size(); i++) {
+        DadosEpisodios dadosEpisodio = dadosEpisodios.get(i);
+        Episodio episodio = new Episodio(numeroTemporadaNormalizado, dadosEpisodio);
+        if (episodio.getNumeroEpisodio() == null) {
+            episodio.setNumeroEpisodio(i + 1);
+        }
+        episodio.setSerie(serie);
+        episodios.add(episodio);
+    }
+
+    if (episodios.isEmpty()) {
+        return Collections.emptyList();
+    }
+
+    List<Episodio> episodiosExistentes = Optional.ofNullable(serie.getEpisodios())
+            .map(ArrayList::new)
+            .orElseGet(ArrayList::new);
+
+    episodiosExistentes.removeIf(ep -> Objects.equals(ep.getTemporada(), numeroTemporadaNormalizado));
+    episodiosExistentes.addAll(episodios);
+    serie.setEpisodios(episodiosExistentes);
+    repositorio.save(serie);
+
+    return episodios;
+}
 }
 
