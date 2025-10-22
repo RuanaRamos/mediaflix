@@ -3,6 +3,8 @@ package br.com.ruana.mediaflix.service;
 import br.com.ruana.mediaflix.dto.EpisodioDTO;
 import br.com.ruana.mediaflix.dto.SerieDTO;
 import br.com.ruana.mediaflix.model.Categoria;
+import java.util.Comparator;
+
 import br.com.ruana.mediaflix.model.Episodio;
 import br.com.ruana.mediaflix.model.Serie;
 import br.com.ruana.mediaflix.repository.SerieRepository;
@@ -51,22 +53,14 @@ public class SerieService {
     }
 
     public List<EpisodioDTO> obterTodasTemporadas(Long id) {
-        Optional<Serie> serie = repositorio.findById(id);
-
-        if (serie.isPresent()) {
-            Serie s = serie.get();
-            return s.getEpisodios().stream()
-                    .map(e -> new EpisodioDTO(e.getTemporada(), e.getNumeroEpisodio(), e.getTitulo()))
-                    .collect(Collectors.toList());
-        }
-        return Collections.emptyList();
+        return repositorio.findById(id)
+                .map(Serie::getEpisodios)
+                .map(this::converterEpisodios)
+                .orElse(Collections.emptyList());
     }
 
-    public List<EpisodioDTO> obterTemporadasPorNumero(Long id, Long numero) {
-        return repositorio.obterEpisodiosPorTemporada(id, numero)
-                .stream()
-                .map(e -> new EpisodioDTO(e.getTemporada(), e.getNumeroEpisodio(), e.getTitulo()))
-                .collect(Collectors.toList());
+    public List<EpisodioDTO> obterTemporadasPorNumero(Long id, Integer numero) {
+        return converterEpisodios(repositorio.obterEpisodiosPorTemporada(id, numero));
     }
 
     public List<SerieDTO> obterSeriesPorCategoria(String nomeGenero) {
@@ -81,6 +75,21 @@ public class SerieService {
                         .map(e -> new EpisodioDTO(e.getTemporada(), e.getNumeroEpisodio(), e.getTitulo()))
                         .collect(Collectors.toList()))
                 .orElse(Collections.emptyList());
+    }
+    private List<EpisodioDTO> converterEpisodios(List<Episodio> episodios) {
+        if (episodios == null || episodios.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Comparator<Episodio> comparator = Comparator
+                .comparing(Episodio::getTemporada, Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(Episodio::getNumeroEpisodio, Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(Episodio::getTitulo, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+
+        return episodios.stream()
+                .sorted(comparator)
+                .map(e -> new EpisodioDTO(e.getTemporada(), e.getNumeroEpisodio(), e.getTitulo()))
+                .collect(Collectors.toList());
     }
 }
 
