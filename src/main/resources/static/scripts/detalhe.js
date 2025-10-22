@@ -1,87 +1,53 @@
-import getDados from "/scripts/getDados.js";
+const $ = (s)=>document.querySelector(s);
+async function getJson(u){ const r=await fetch(u,{headers:{Accept:'application/json'}}); if(!r.ok) throw new Error(`HTTP ${r.status}@${u}`); return r.json(); }
+function pick(o, ks, d){ for(const k of ks){ if(o&&o[k]!=null&&o[k]!=='') return o[k]; } return d; }
+function https(u){ if(typeof u!=='string') return ''; u=u.trim(); if(u.startsWith('http://')) u='https://'+u.slice(7); if(u.startsWith('//')) u='https:'+u; return u; }
 
-const params = new URLSearchParams(window.location.search);
-const serieId = params.get("id");
+async function carregar(){
+  const id = new URLSearchParams(location.search).get('id');
+  if(!id){ $('#ficha-descricao').textContent='ID ausente'; return; }
 
-const listaTemporadas = document.getElementById("temporadas-select");
-const fichaSerie      = document.getElementById("temporadas-episodios");
-const fichaDescricao  = document.getElementById("ficha-descricao");
 
-function option(value, text) {
-  const o = document.createElement("option");
-  o.value = value; o.textContent = text;
-  return o;
-}
-
-async function carregarInfoSerie() {
-  const data = await getDados(`/series/${serieId}`);
-  fichaDescricao.innerHTML = `
-    <img src="${data.poster}" alt="${data.titulo}" />
-    <div>
-      <h2>${data.titulo}</h2>
-      <div class="descricao-texto">
-        <p><b>Média de avaliações:</b> ${data.avaliacao ?? "-"}</p>
-        <p>${data.sinopse ?? ""}</p>
-        <p><b>Estrelando:</b> ${data.atores ?? ""}</p>
+  const s = await getJson(`/series/${encodeURIComponent(id)}`);
+  const titulo = pick(s, ['titulo','nome','title','name'],'Sem título');
+  const poster = https(pick(s, ['poster','posterUrl','imagem','capa','urlImagem','image','thumb','url'],''));
+  const sinopse= pick(s, ['sinopse','descricao','overview'],'');
+  const genero = pick(s, ['genero','genre'],'');
+  const nota   = pick(s, ['nota','rating','imdbRating'],'');
+  $('#ficha-descricao').innerHTML = `
+    <div style="display:flex;gap:16px;align-items:flex-start;">
+      ${poster?`<img src="${poster}" alt="${titulo}" style="width:200px;aspect-ratio:2/3;object-fit:cover;border-radius:8px;background:#f2f2f2;">`:`<div style="width:200px;aspect-ratio:2/3;background:#eee;border-radius:8px;"></div>`}
+      <div>
+        <h2>${titulo}</h2>
+        ${sinopse?`<p>${sinopse}</p>`:''}
+        <p><strong>Gênero:</strong> ${genero||'-'}</p>
+        <p><strong>Nota:</strong> ${nota||'-'}</p>
       </div>
     </div>`;
-}
 
-// Lê uma propriedade com fallback de nomes
-const getNum = e => e.numeroEpisodio ?? e.numero ?? e.episodio ?? "-";
-const getTemp = e => e.temporada ?? e.season ?? e.numeroTemporada ?? null;
+  const temps = await getJson(`/series/${encodeURIComponent(id)}/temporadas`);
+  const select = $('#temporadas-select');
+  select.innerHTML = (temps||[]).map(t=>{
+    const n = pick(t,['numero','temporada','season','id'],'');
+    return `<option value="${n}">Temporada ${n}</option>`;
+  }).join('');
 
-async function carregarTemporadas() {
-  const data = await getDados(`/series/${serieId}/temporadas/todas`);
-  // Se a API não informar temporada em cada item, esse Set ficará vazio.
-  const temps = [...new Set(data.map(e => getTemp(e)).filter(v => v != null))]
-                .sort((a,b)=>a-b);
+  async function carregarEps(n){
+    if(!n){ $('#temporadas-episodios').innerHTML=''; return; }
 
-  listaTemporadas.innerHTML = "";
-  listaTemporadas.appendChild(option("", "Selecione a temporada"));
-  // Só cria opções se de fato houver temporada nos dados
-  temps.forEach(t => listaTemporadas.appendChild(option(String(t), `Temporada ${t}`)));
-  listaTemporadas.appendChild(option("todas", "Todas as temporadas"));
-}
-
-async function carregarEpisodios() {
-  const val = listaTemporadas.value;
-  const url = (val === "todas" || val === "")
-    ? `/series/${serieId}/temporadas/todas`
-    : `/series/${serieId}/temporadas/${val}`;
-
-  const data = await getDados(url);
-  fichaSerie.innerHTML = "";
-
-  // Se os itens não trazem "temporada", não agrupa por temporada
-  const temps = [...new Set(data.map(e => getTemp(e)).filter(v => v != null))]
-                .sort((a,b)=>a-b);
-
-  if (temps.length === 0) {
-    // Lista “flat” (evita “Temporada null”)
-    const ul = document.createElement("ul");
-    ul.className = "episodios-lista";
-    ul.innerHTML = data.map(e => `<li>${getNum(e)} - ${e.titulo}</li>`).join("");
-    fichaSerie.appendChild(ul);
-    return;
+    const eps = await getJson(`/series/${encodeURIComponent(id)}/temporadas/${encodeURIComponent(n)}/episodios`);
+    $('#temporadas-episodios').innerHTML = (eps||[]).map(e=>{
+      const num = pick(e,['numero','episodio','episode','id'],'');
+      const tit = pick(e,['titulo','nome','title','name'],'');
+      const desc= pick(e,['sinopse','descricao','overview'],'');
+      return `<div style="padding:8px 0;border-bottom:1px solid #eee;">
+        <strong>E${num}</strong> — ${tit}
+        ${desc?`<div style="color:#444;font-size:14px;margin-top:4px;">${desc}</div>`:''}
+      </div>`;
+    }).join('');
   }
 
-  // Agrupa por temporada quando existir
-  temps.forEach(t => {
-    const episodios = data.filter(e => getTemp(e) === t);
-    const p = document.createElement("p");
-    p.textContent = `Temporada ${t}`;
-    const br = document.createElement("br");
-    const ul = document.createElement("ul");
-    ul.className = "episodios-lista";
-    ul.innerHTML = episodios.map(e => `<li>${getNum(e)} - ${e.titulo}</li>`).join("");
-    fichaSerie.appendChild(p); fichaSerie.appendChild(br); fichaSerie.appendChild(ul);
-  });
+  if(select.value) await carregarEps(select.value);
+  select.addEventListener('change', e=>carregarEps(e.target.value));
 }
-
-listaTemporadas.addEventListener("change", carregarEpisodios);
-
-// boot
-if (!serieId) console.error("URL sem ?id=...");
-carregarInfoSerie().catch(console.error);
-carregarTemporadas().catch(console.error);
+window.addEventListener('DOMContentLoaded', carregar);
