@@ -246,29 +246,29 @@ async function carregar() {
 
           temporadasContainer.addEventListener('click', (event) => {
       const botao = event.target.closest('[data-temporada]');
-      if (!botao) return;
+                 if (!botao) return;
 
-      const temporada = botao.dataset.temporada;
-      if (!temporada || temporada === temporadaAtual) return;
+                 const temporada = botao.dataset.temporada;
+                 if (!temporada || temporada === temporadaAtual) return;
 
-      temporadaAtual = temporada;
-      marcarTemporadaAtiva(botao);
-      void carregarEpisodiosDaTemporada(temporada);
-    });
+                 temporadaAtual = temporada;
+                 marcarTemporadaAtiva(botao);
+                 void carregarEpisodiosDaTemporada(temporada);
+               });
 
-    const primeiroBotao = temporadasContainer.querySelector('[data-temporada]');
-    if (primeiroBotao) {
-      temporadaAtual = primeiroBotao.dataset.temporada;
-      marcarTemporadaAtiva(primeiroBotao);
-     await carregarEpisodiosDaTemporada(temporadaAtual);
-    } else {
-      mostrarStatus('Die Staffeln dieser Serie konnten nicht gefunden werden.');
-    }
+               const primeiroBotao = temporadasContainer.querySelector('[data-temporada]');
+               if (primeiroBotao) {
+                 temporadaAtual = primeiroBotao.dataset.temporada;
+                 marcarTemporadaAtiva(primeiroBotao);
+                 await carregarEpisodiosDaTemporada(temporadaAtual);
+               } else {
+                 mostrarStatus('Die Staffeln dieser Serie konnten nicht gefunden werden.');
+               }
   } catch (erro) {
     console.error('Fehler beim Laden der Serie', erro);
 
     ficha.innerHTML = '<p style="color:#b00">Die Details dieser Serie konnten nicht geladen werden.</p>';
-      mostrarStatus('Fehler beim Laden der Episoden dieser Serie.', 'episodios__status--erro');
+       mostrarStatus('Fehler beim Laden der Episoden dieser Serie.', 'episodios__status--erro');
+      }
 }
-
 window.addEventListener('DOMContentLoaded', carregar);
