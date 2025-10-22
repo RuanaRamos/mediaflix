@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-
+import java.util.Objects;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -71,16 +71,33 @@ public class SerieService {
     }
 
     public List<EpisodioDTO> obterTemporadasPorNumero(Long id, Integer numero) {
-        List<Episodio> episodios = repositorio.obterEpisodiosPorTemporada(id, numero);
-
-        if (episodios == null || episodios.isEmpty()) {
-            episodios = repositorio.findById(id)
-                    .map(serie -> buscarEpisodiosDaApi(serie, numero))
-                    .orElse(Collections.emptyList());
+        if (id == null || numero == null || numero <= 0) {
+            return Collections.emptyList();
         }
 
-        return converterEpisodios(episodios);
-    }
+        List<Episodio> episodios = repositorio.obterEpisodiosPorTemporada(id, numero);
+
+        if (episodios != null && !episodios.isEmpty()) {
+            return converterEpisodios(episodios);
+        }
+
+        return repositorio.findById(id)
+                .map(serie -> {
+                    List<Episodio> novosEpisodios = buscarEpisodiosDaApi(serie, numero);
+
+                    if (!novosEpisodios.isEmpty()) {
+                        return converterEpisodios(novosEpisodios);
+                    }
+
+                    List<Episodio> episodiosPersistidos = Optional.ofNullable(serie.getEpisodios())
+                            .orElse(Collections.emptyList())
+                            .stream()
+                            .filter(ep -> Objects.equals(ep.getTemporada(), numero))
+                            .collect(Collectors.toList());
+
+                    return converterEpisodios(episodiosPersistidos);
+                })
+                .orElse(Collections.emptyList());
     }
 
     public List<SerieDTO> obterSeriesPorCategoria(String nomeGenero) {
@@ -112,50 +129,63 @@ public class SerieService {
                 .collect(Collectors.toList());
     }
 
-private List<Episodio> buscarEpisodiosDaApi(Serie serie, Integer numeroTemporada) {
-    if (serie == null || numeroTemporada == null || numeroTemporada <= 0) {
-        return Collections.emptyList();
-    }
-
-    String tituloCodificado = URLEncoder.encode(serie.getTitulo(), StandardCharsets.UTF_8);
-    String url = ENDERECO + tituloCodificado + "&season=" + numeroTemporada + API_KEY;
-    String json = consumoApi.obterDados(url);
-    DadosTemporada dadosTemporada = conversor.obterDados(json, DadosTemporada.class);
-    if (dadosTemporada == null) {
-        return Collections.emptyList();
-    }
-
-    Integer numeroTemporadaNormalizado = Optional.ofNullable(dadosTemporada.numeroComoInteiro())
-            .orElse(numeroTemporada);
-    List<DadosEpisodios> dadosEpisodios = Optional.ofNullable(dadosTemporada.episodios())
-            .orElse(Collections.emptyList());
-
-    List<Episodio> episodios = new ArrayList<>();
-
-    for (int i = 0; i < dadosEpisodios.size(); i++) {
-        DadosEpisodios dadosEpisodio = dadosEpisodios.get(i);
-        Episodio episodio = new Episodio(numeroTemporadaNormalizado, dadosEpisodio);
-        if (episodio.getNumeroEpisodio() == null) {
-            episodio.setNumeroEpisodio(i + 1);
+    private List<Episodio> buscarEpisodiosDaApi(Serie serie, Integer numeroTemporada) {
+        if (serie == null || numeroTemporada == null || numeroTemporada <= 0) {
+            return Collections.emptyList();
         }
-        episodio.setSerie(serie);
-        episodios.add(episodio);
+
+        String tituloCodificado = URLEncoder.encode(serie.getTitulo(), StandardCharsets.UTF_8);
+        String url = ENDERECO + tituloCodificado + "&season=" + numeroTemporada + API_KEY;
+        String json;
+        try {
+            json = consumoApi.obterDados(url);
+        } catch (RuntimeException ex) {
+            return Collections.emptyList();
+        }
+
+        DadosTemporada dadosTemporada;
+        try {
+            dadosTemporada = conversor.obterDados(json, DadosTemporada.class);
+        } catch (RuntimeException ex) {
+            return Collections.emptyList();
+        }
+
+        if (dadosTemporada == null) {
+            return Collections.emptyList();
+        }
+
+        Integer numeroTemporadaNormalizado = Optional.ofNullable(dadosTemporada.numeroComoInteiro())
+                .orElse(numeroTemporada);
+        List<DadosEpisodios> dadosEpisodios = Optional.ofNullable(dadosTemporada.episodios())
+                .orElse(Collections.emptyList());
+
+        List<Episodio> episodios = new ArrayList<>();
+
+        for (int i = 0; i < dadosEpisodios.size(); i++) {
+            DadosEpisodios dadosEpisodio = dadosEpisodios.get(i);
+            Episodio episodio = new Episodio(numeroTemporadaNormalizado, dadosEpisodio);
+            if (episodio.getNumeroEpisodio() == null) {
+                episodio.setNumeroEpisodio(i + 1);
+            }
+            episodio.setSerie(serie);
+            episodios.add(episodio);
+        }
+
+        if (episodios.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Episodio> episodiosExistentes = Optional.ofNullable(serie.getEpisodios())
+                .map(ArrayList::new)
+                .orElseGet(ArrayList::new);
+
+        episodiosExistentes.removeIf(ep -> Objects.equals(ep.getTemporada(), numeroTemporadaNormalizado));
+        episodiosExistentes.addAll(episodios);
+        serie.setEpisodios(episodiosExistentes);
+        repositorio.save(serie);
+
+        return repositorio.obterEpisodiosPorTemporada(serie.getId(), numeroTemporadaNormalizado);
     }
-
-    if (episodios.isEmpty()) {
-        return Collections.emptyList();
-    }
-
-    List<Episodio> episodiosExistentes = Optional.ofNullable(serie.getEpisodios())
-            .map(ArrayList::new)
-            .orElseGet(ArrayList::new);
-
-    episodiosExistentes.removeIf(ep -> Objects.equals(ep.getTemporada(), numeroTemporadaNormalizado));
-    episodiosExistentes.addAll(episodios);
-    serie.setEpisodios(episodiosExistentes);
-    repositorio.save(serie);
-
-    return episodios;
 }
-}
+
 
