@@ -16,22 +16,46 @@ function cardHtml(item){
 }
 
 async function render(endpoint, target){
+ const container = document.querySelector(target);
+  if(!container){
+    console.warn('Container não encontrado para', target);
+    return;
+  }
   try{
     const data = await getJson(endpoint);
-    document.querySelector(target).innerHTML = (Array.isArray(data)?data:[]).map(cardHtml).join('');
+     const list = Array.isArray(data) ? data : [];
+        container.innerHTML = list.length
+          ? list.map(cardHtml).join('')
+          : `<li class="grid__empty">Nenhuma série encontrada.</li>`;
   }catch(e){
     console.error('Falha em', endpoint, e);
-    document.querySelector(target).innerHTML = `<li style="color:#b00">Erro ao carregar ${endpoint}</li>`;
+    container.innerHTML = `<li class="grid__empty" style="color:#b00">Erro ao carregar ${endpoint}</li>`;
   }
 }
 
-async function init(){
-
+async function carregarListasPadrao(){
   await Promise.all([
-    render('/series', '#grid-lancamentos'),
-    render('/series', '#grid-top5'),
+     render('/series/lancamentos', '#grid-lancamentos'),
+        render('/series/top5', '#grid-top5'),
     render('/series', '#grid-series'),
   ]);
+}
+async function init(){
+  const selectCategorias = document.querySelector('[data-categorias]');
+
+  await carregarListasPadrao();
+
+  if(selectCategorias){
+    selectCategorias.addEventListener('change', async (event)=>{
+      const valor = event.target.value;
+      if(valor === 'todos'){
+        await carregarListasPadrao();
+        return;
+      }
+
+      await render(`/series/categoria/${encodeURIComponent(valor)}`, '#grid-series');
+    });
+  }
 
 
   document.addEventListener('click', (e)=>{

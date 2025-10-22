@@ -19,6 +19,15 @@ html, body { margin: 0; padding: 0; font-family: Inter, system-ui, Arial, sans-s
   display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr));
   gap:16px; list-style:none; padding:0; margin:0;
 }
+.grid__empty {
+  list-style:none;
+  padding:32px 0;
+  margin:0;
+  grid-column:1 / -1;
+  text-align:center;
+  color:#666;
+  font-size:14px;
+}
 .card {
   background:#fff; border-radius:12px; overflow:hidden;
   box-shadow:0 2px 10px rgba(0,0,0,.06); transition:transform .2s, box-shadow .2s; cursor:pointer;

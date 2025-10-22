@@ -20,11 +20,11 @@
 
         <select data-categorias>
             <option value="todos">Categorias</option>
-            <option value="comédia">Comédia</option>
-            <option value="ação">Ação</option>
-            <option value="crime">Crime</option>
-            <option value="drama">Drama</option>
-            <option value="aventura">Aventura</option>
+            <option value="Comédia">Comédia</option>
+            <option value="Ação">Ação</option>
+            <option value="Crime">Crime</option>
+            <option value="Drama">Drama</option>
+            <option value="Romance">Romance</option>
         </select>
     </div>
     <div class="cabecalho__opcoes">
@@ -50,46 +50,7 @@
         <ul id="grid-series" class="grid"></ul>
     </section>
 </main>
-
-
-<script type="module">
-    console.log('[MediaFlix] inline JS carregado');
-
-    function li(v){ return document.querySelector(v); }
-    async function get(endpoint){
-      const r = await fetch(endpoint, { headers:{Accept:'application/json'} });
-      if(!r.ok) throw new Error(`HTTP ${r.status} @ ${endpoint}`);
-      return r.json();
-    }
-    function card(item){
-      const titulo = item.titulo ?? item.nome ?? 'Sem título';
-      const poster = (item.poster ?? item.imagem ?? item.capa ?? '').replace(/^http:\/\//,'https://');
-      const img = poster ? `<img class="card__thumb" src="${poster}" alt="${titulo}">`
-                         : `<div class="card__thumb card__thumb--fallback"></div>`;
-      return `<li class="card">${img}<div class="card__body"><h3 class="card__title">${titulo}</h3></div></li>`;
-    }
-
-    async function render(endpoint, gridSel){
-      try{
-        const data = await get(endpoint);
-        console.info('[MediaFlix]', endpoint, '→', Array.isArray(data)? data.length : data);
-        li(gridSel).innerHTML = (data||[]).map(card).join('');
-      }catch(e){
-        console.error('Falha em', endpoint, e);
-        li(gridSel).innerHTML = `<li style="color:#b00">Erro ao carregar ${endpoint}</li>`;
-      }
-    }
-
-    window.addEventListener('DOMContentLoaded', async()=>{
-      console.log('[MediaFlix] DOM pronto');
-      // use /series em todas as seções pra garantir conteúdo agora
-      await Promise.all([
-        render('/series', '#grid-lancamentos'),
-        render('/series', '#grid-top5'),
-        render('/series', '#grid-series'),
-      ]);
-    });
-</script>
+<script type="module" src="/scripts/index.js"></script>
 
 </body>
 </html>
