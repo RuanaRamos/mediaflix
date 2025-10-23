@@ -12,16 +12,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 17 (Temurin)
+      - name: Set up Java (Temurin)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "21"   
+          cache: maven
+
+   
+      - name: Build (Maven) – skip tests
+        if: hashFiles('**/mvnw') != ''
+        run: |
+          chmod +x ./mvnw
+          ./mvnw -B -DskipTests package
 
      
- - name: Build (Maven) – skip tests
-  if: hashFiles('**/mvnw') != ''
-  run: |
-    chmod +x ./mvnw
-    ./m
-
+      - name: Build (Gradle) – skip tests
+        if: hashFiles('**/gradlew') != ''
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assemble --no-daemon
