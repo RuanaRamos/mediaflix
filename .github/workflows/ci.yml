@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+     
+      - name: Build & Test (Maven)
+        if: hashFiles('**/mvnw') != ''
+        run: |
+          chmod +x ./mvnw
+          ./mvnw -B -DskipTests=false verify
+
