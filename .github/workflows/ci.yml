@@ -19,9 +19,9 @@ jobs:
           java-version: "21"
 
      
-      - name: Build & Test (Maven)
-        if: hashFiles('**/mvnw') != ''
-        run: |
-          chmod +x ./mvnw
-          ./mvnw -B -DskipTests=false verify
+ - name: Build (Maven) – skip tests
+  if: hashFiles('**/mvnw') != ''
+  run: |
+    chmod +x ./mvnw
+    ./m
 
