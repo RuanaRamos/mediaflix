@@ -1,7 +1,7 @@
 <img width="1920" height="960" alt="ruana-mediaflix-GITHUB-COVER-SITELOGO-1920x960" src="https://github.com/user-attachments/assets/aa7b7d27-a96f-499d-a8f4-3e8b92ac6ed6" />
 
 # Ruana MediaFlix · Java + Spring Boot · REST API + Frontend
-![Social Preview](docs/cover.png)
+
 
 > **Für Recruiter (60 Sek.):** Kleine, klare **REST-API** (Serien → Staffeln → Episoden) + minimales **Frontend**.  
 > Fokus: **saubere Endpunkte, DTOs, Repositories, Fehlerbehandlung**.  
