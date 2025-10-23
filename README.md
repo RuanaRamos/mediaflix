@@ -3,7 +3,6 @@
 # Ruana MediaFlix · Java + Spring Boot · REST API + Frontend
 ![CI](https://github.com/RuanaRamos/mediaflix/actions/workflows/ci.yml/badge.svg)
 
-
 > **Für Recruiter (60 Sek.):** Kleine, klare **REST-API** (Serien → Staffeln → Episoden) + minimales **Frontend**.  
 > Fokus: **saubere Endpunkte, DTOs, Repositories, Fehlerbehandlung**.  
 > **Direkt zum Code:** [Controller](https://github.com/RuanaRamos/mediaflix/tree/main/src/main/java/br/com/ruana/mediaflix/controller) · [Service](https://github.com/RuanaRamos/mediaflix/tree/main/src/main/java/br/com/ruana/mediaflix/service) · [Repository](https://github.com/RuanaRamos/mediaflix/tree/main/src/main/java/br/com/ruana/mediaflix/repository) · [DTO](https://github.com/RuanaRamos/mediaflix/tree/main/src/main/java/br/com/ruana/mediaflix/dto) · [Model/Entity](https://github.com/RuanaRamos/mediaflix/tree/main/src/main/java/br/com/ruana/mediaflix/model)
@@ -23,54 +22,52 @@
 - Optional: OMDb/IMDb (API-Key)
 
 ## 🧰 Tech-Stack
-**Backend:** Java 21+, Spring Boot (Web, JPA), H2/PostgreSQL, Flyway  
+**Backend:** Java 21, Spring Boot (Web, JPA), **PostgreSQL**, Flyway  
 **Frontend:** HTML, CSS, Vanilla JS (Fetch API)  
-**Build:** Maven oder Gradle · **Swagger/OpenAPI** (optional)
+**Build:** Maven · **Swagger/OpenAPI** (optional)
 
 ---
 
-## 🚀 Schnellstart
+## 🧩 Backend
 
-### Backend
+**Start (Maven)**
 ```bash
-# Maven
 ./mvnw spring-boot:run
-
-
-
-**application.properties**
-```properties
-
-# PostgreSQL (dev/prod)
-spring.datasource.url=jdbc:postgresql://localhost:5432/mediaflix
-spring.datasource.username=postgres
-spring.datasource.password=postgres
+# läuft unter: http://localhost:8080
 ```
+
+---
 
 ---
 
 ## 🖥️ Frontend (HTML/CSS/JS)
 
-**Código:** [`/frontend`](./frontend)
+**Code:** [`/frontend`](./frontend)
 
-**Como rodar local**
-
-# abrir direto
-frontend/index.html
+**Lokal starten**
 ```
+# Direkt im Browser öffnen
+frontend/index.html
+
+# ODER kleinen Dev-Server starten
+npx http-server frontend -p 5500
+# → http://localhost:5500
 
 
-📚 API (Back-end REST)
 
+## 📚 API (Back-End REST)
 
-Método	    Endpoint	              Descrição
-GET	        /series	                Lista todas as séries
-GET	        /series/{id}	          Detalhe de uma série
-GET	        /series/{id}/seasons	  Lista as temporadas da série
-GET	        /seasons/{id}/episodes	Lista os episódios da temporada
-GET	        /top5	                  Top 5 (demo)
-GET	        /releases	              Novidades (demo)
+| Methode | Endpoint                 | Beschreibung                      |
+|:------:|---------------------------|-----------------------------------|
+| GET    | `/series`                 | Alle Serien auflisten             |
+| GET    | `/series/{id}`            | Details zu einer Serie            |
+| GET    | `/series/{id}/seasons`    | Staffeln einer Serie              |
+| GET    | `/seasons/{id}/episodes`  | Episoden einer Staffel            |
+| GET    | `/top5`                   | Top 5 (Demo)                      |
+| GET    | `/releases`               | Neuerscheinungen (Demo)           |
 
+**Beispiel-Response**
+```json
 { "id": 1, "title": "Game of Swords", "seasons": 3, "rating": 8.7 }
 
 ## 🛠️ Troubleshooting
