@@ -36,13 +36,11 @@
 # Maven
 ./mvnw spring-boot:run
 
-# oder Gradle
-./gradlew bootRun
-# läuft auf: http://localhost:8080
-application.properties (Beispiel)
 
-**application.properties (Beispiel)**
+
+**application.properties**
 ```properties
+
 # PostgreSQL (dev/prod)
 spring.datasource.url=jdbc:postgresql://localhost:5432/mediaflix
 spring.datasource.username=postgres
