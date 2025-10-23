@@ -45,11 +45,10 @@
 spring.datasource.url=jdbc:postgresql://localhost:5432/mediaflix
 spring.datasource.username=postgres
 spring.datasource.password=postgres
+```
 
-spring.jpa.hibernate.ddl-auto=none
-# spring.jpa.show-sql=true  # opcional
 
-```### Frontend```
+```### Frontend
 frontend/index.html
 
 
@@ -62,8 +61,6 @@ GET /series/{id}/seasons
 GET /seasons/{id}/episodes
 GET /top5
 GET /releases
-Beispiel-Response
-
 
 { "id": 1, "title": "Game of Swords", "seasons": 3, "rating": 8.7 }
 
