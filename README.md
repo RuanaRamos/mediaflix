@@ -47,20 +47,29 @@ spring.datasource.username=postgres
 spring.datasource.password=postgres
 ```
 
+---
 
-```### Frontend
+## 🖥️ Frontend (HTML/CSS/JS)
+
+**Código:** [`/frontend`](./frontend)
+
+**Como rodar local**
+
+# abrir direto
 frontend/index.html
 
 
-📚 API
-h
-Code kopieren
-GET /series
-GET /series/{id}
-GET /series/{id}/seasons
-GET /seasons/{id}/episodes
-GET /top5
-GET /releases
+
+📚 API (Back-end REST)
+
+
+Método	    Endpoint	              Descrição
+GET	        /series	                Lista todas as séries
+GET	        /series/{id}	          Detalhe de uma série
+GET	        /series/{id}/seasons	  Lista as temporadas da série
+GET	        /seasons/{id}/episodes	Lista os episódios da temporada
+GET	        /top5	                  Top 5 (demo)
+GET	        /releases	              Novidades (demo)
 
 { "id": 1, "title": "Game of Swords", "seasons": 3, "rating": 8.7 }
 
