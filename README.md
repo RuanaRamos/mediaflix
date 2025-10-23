@@ -23,7 +23,7 @@
 - Optional: OMDb/IMDb (API-Key)
 
 ## 🧰 Tech-Stack
-**Backend:** Java 17+, Spring Boot (Web, JPA), H2/PostgreSQL, Flyway  
+**Backend:** Java 21+, Spring Boot (Web, JPA), H2/PostgreSQL, Flyway  
 **Frontend:** HTML, CSS, Vanilla JS (Fetch API)  
 **Build:** Maven oder Gradle · **Swagger/OpenAPI** (optional)
 
